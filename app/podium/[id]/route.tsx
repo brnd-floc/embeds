@@ -36,12 +36,14 @@ export async function GET(
   try {
     const transactionHash = params.id;
 
-    if (!transactionHash) {
+    if (!transactionHash || 
+        typeof transactionHash !== 'string' || 
+        transactionHash.length > 100 ||
+        !/^[a-zA-Z0-9\-_]+$/.test(transactionHash)) {
       return Response.redirect("https://brnd.land/image.png", 302);
     }
 
     const podium = await getPodium(transactionHash);
-    console.log("THE PODIUM IS", podium);
 
     if (!podium) {
       return Response.redirect("https://brnd.land/image.png", 302);
@@ -349,8 +351,12 @@ export async function GET(
         width: 1200,
         height: 800,
         headers: {
-          "Cache-Control":
-            "public, max-age=3600, s-maxage=86400, stale-while-revalidate",
+          "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
+          "X-Content-Type-Options": "nosniff",
+          "X-Frame-Options": "DENY",
+          "X-XSS-Protection": "1; mode=block",
+          "Referrer-Policy": "strict-origin-when-cross-origin",
+          "Content-Security-Policy": "default-src 'none'; img-src 'self' data: https:; style-src 'unsafe-inline'",
         },
         fonts: [
           {

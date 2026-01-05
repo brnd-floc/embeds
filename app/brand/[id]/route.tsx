@@ -46,18 +46,23 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    console.log("params", params);
-    const brandId = parseInt(params.id);
-    console.log("brandId", brandId);
+    const brandIdStr = params.id;
 
-    if (isNaN(brandId)) {
+    if (!brandIdStr || 
+        typeof brandIdStr !== 'string' || 
+        brandIdStr.length > 10 ||
+        !/^\d+$/.test(brandIdStr)) {
+      return new Response("Invalid brand ID", { status: 400 });
+    }
+
+    const brandId = parseInt(brandIdStr, 10);
+
+    if (isNaN(brandId) || brandId <= 0 || brandId > 999999999) {
       return new Response("Invalid brand ID", { status: 400 });
     }
 
     const brand = await getBrand(brandId);
-    console.log("brand", brand);
     const totalBrands = await getTotalBrands();
-    console.log("totalBrands", totalBrands);
 
     if (!brand || !totalBrands) {
       return new Response("Brand not found", { status: 404 });
@@ -413,8 +418,12 @@ export async function GET(
         width: 1200,
         height: 800,
         headers: {
-          "Cache-Control":
-            "public, max-age=3600, s-maxage=86400, stale-while-revalidate",
+          "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
+          "X-Content-Type-Options": "nosniff",
+          "X-Frame-Options": "DENY",
+          "X-XSS-Protection": "1; mode=block",
+          "Referrer-Policy": "strict-origin-when-cross-origin",
+          "Content-Security-Policy": "default-src 'none'; img-src 'self' data: https:; style-src 'unsafe-inline'",
         },
         fonts: [
           {
