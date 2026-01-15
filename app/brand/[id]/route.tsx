@@ -234,7 +234,7 @@ export async function GET(
                   fontWeight: 500,
                 }}
               >
-                {brand.category?.ranking || "N/A"}
+                {brand.currentRanking}
               </div>
               <div
                 style={{
@@ -340,7 +340,7 @@ export async function GET(
                   fontWeight: 500,
                 }}
               >
-                {brand.ranking || "N/A"}
+                {brand.category?.ranking || "N/A"}
               </div>
               <div
                 style={{
@@ -391,7 +391,7 @@ export async function GET(
                 fontWeight: 500,
               }}
             >
-              {formatNumber(brand.uniqueVotersCount || 0)}
+              {formatNumber(brand.fanCount || 0)}
             </div>
           </div>
 

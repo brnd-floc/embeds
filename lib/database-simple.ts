@@ -8,6 +8,8 @@ export interface Brand {
   score: number;
   ranking: string;
   uniqueVotersCount: number;
+  currentRanking: number; // Dynamic global ranking (same as backend)
+  fanCount: number; // Dynamic fan count (same as backend)
   category?: {
     name: string;
     totalBrands?: number;
@@ -73,22 +75,27 @@ export async function getBrand(id: number): Promise<Brand | null> {
     const conn = await getConnection();
     const [rows] = await conn.execute(
       `
-      SELECT 
-        b.id, 
-        b.name, 
-        b.description, 
-        b.imageUrl, 
-        b.score, 
-        b.ranking, 
+      SELECT
+        b.id,
+        b.name,
+        b.description,
+        b.imageUrl,
+        b.score,
+        b.ranking,
         b.uniqueVotersCount,
         b.categoryId,
         c.name as categoryName,
         (SELECT COUNT(*) FROM brands b2 WHERE b2.categoryId = b.categoryId) as categoryTotalBrands,
-        (SELECT COUNT(*) + 1 FROM brands b3 
-         WHERE b3.categoryId = b.categoryId 
-         AND b3.score > b.score) as categoryRanking
-      FROM brands b 
-      LEFT JOIN categories c ON b.categoryId = c.id 
+        (SELECT COUNT(*) + 1 FROM brands b3
+         WHERE b3.categoryId = b.categoryId
+         AND b3.score > b.score) as categoryRanking,
+        (SELECT COUNT(*) + 1 FROM brands br
+         WHERE br.banned = 0
+         AND br.score > b.score) as currentRanking,
+        (SELECT COUNT(DISTINCT v.userId) FROM user_brand_votes v
+         WHERE v.brand1Id = b.id OR v.brand2Id = b.id OR v.brand3Id = b.id) as fanCount
+      FROM brands b
+      LEFT JOIN categories c ON b.categoryId = c.id
       WHERE b.id = ?
     `,
       [id]
@@ -106,6 +113,8 @@ export async function getBrand(id: number): Promise<Brand | null> {
       score: brand.score,
       ranking: brand.ranking,
       uniqueVotersCount: brand.uniqueVotersCount,
+      currentRanking: Number(brand.currentRanking) || 1,
+      fanCount: Number(brand.fanCount) || 0,
       category: brand.categoryName
         ? {
             name: brand.categoryName,
