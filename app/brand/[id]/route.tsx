@@ -391,7 +391,7 @@ export async function GET(
                 fontWeight: 500,
               }}
             >
-              {formatNumber(brand.fanCount || 0)}
+              {formatNumber(brand.uniqueVotersCount || 0)}
             </div>
           </div>
 
