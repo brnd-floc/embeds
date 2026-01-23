@@ -36,17 +36,35 @@ export async function GET(
   try {
     const transactionHash = params.id;
 
-    if (!transactionHash || 
-        typeof transactionHash !== 'string' || 
+    if (!transactionHash ||
+        typeof transactionHash !== 'string' ||
         transactionHash.length > 100 ||
         !/^[a-zA-Z0-9\-_]+$/.test(transactionHash)) {
-      return Response.redirect("https://brnd.land/image.png", 302);
+      console.warn(`Invalid transaction hash format: ${transactionHash}`);
+      return new Response(null, {
+        status: 302,
+        headers: {
+          "Location": "https://brnd.land/image.png",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
+        }
+      });
     }
 
     const podium = await getPodium(transactionHash);
 
     if (!podium) {
-      return Response.redirect("https://brnd.land/image.png", 302);
+      console.warn(`Podium not found for transaction hash: ${transactionHash}`);
+      return new Response(null, {
+        status: 302,
+        headers: {
+          "Location": "https://brnd.land/image.png",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
+        }
+      });
     }
 
     const voteCost = podium.brndPaidWhenCreatingPodium || 0;
@@ -351,7 +369,7 @@ export async function GET(
         width: 1200,
         height: 800,
         headers: {
-          "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
+          "Cache-Control": "public, max-age=300, s-maxage=300",
           "X-Content-Type-Options": "nosniff",
           "X-Frame-Options": "DENY",
           "X-XSS-Protection": "1; mode=block",
@@ -375,7 +393,15 @@ export async function GET(
       }
     );
   } catch (e: any) {
-    console.log(`Failed to generate podium image: ${e.message}`);
-    return Response.redirect("https://brnd.land/image.png", 302);
+    console.error(`Failed to generate podium image for ${params.id}:`, e.message, e.stack);
+    return new Response(null, {
+      status: 302,
+      headers: {
+        "Location": "https://brnd.land/image.png",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
+      }
+    });
   }
 }
